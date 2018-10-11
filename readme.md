@@ -5,6 +5,7 @@ This project is build for self learning process, it uses SOLID principles to str
 # Files
 
 Run `docker-compose up` and it will do the rest
+> If something happens, try to run docker-compose build and docker-compose up again
 
 go to browser and enter `localhost:3000/currency`
 > For html part it is just use to connect and test with the backend, therefore the code is messy.
