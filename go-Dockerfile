@@ -1,0 +1,10 @@
+FROM golang:alpine
+
+ADD . /go/src/currency/
+WORKDIR /go/src/currency/
+
+RUN go build -v currency
+
+ENTRYPOINT /go/src/currency/currency
+
+EXPOSE 8009

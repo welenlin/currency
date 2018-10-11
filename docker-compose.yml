@@ -1,0 +1,38 @@
+version: '3'
+services:
+  mysql:
+    container_name: currency_mysql
+    image: mysql:5.7        
+    environment:
+      MYSQL_DATABASE: db_currency
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - "./sql/:/docker-entrypoint-initdb.d"
+    networks:
+      - some-net
+  goback:
+    container_name: go_back
+    restart: always         
+    ports:    
+      - "8009:8009"    
+    depends_on:
+      - "mysql"
+    build:
+      context: ./
+      dockerfile: ./go-Dockerfile    
+    networks:
+      - some-net
+    environment:
+      DB_URL: mysql:3306
+  front:
+    container_name: front
+    restart: always
+    ports:
+      - "3000:80"
+      - "3001:443"
+    build:
+      context: ./
+      dockerfile: ./nginx-Dockerfile
+networks:
+  some-net:
+    driver: bridge

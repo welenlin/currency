@@ -1,0 +1,234 @@
+<html>
+   <head>
+       <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <script
+        src="https://code.jquery.com/jquery-1.12.4.min.js"
+        integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+        crossorigin="anonymous"></script>
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+        <link  href="dist/datepicker.css" rel="stylesheet">
+        <script src="dist/datepicker.js"></script>
+   </head>
+   <body>
+        <div class="container">
+            <div class="col-sm-2">
+                <h3>Input Exchange</h3>
+                <form id="add_exchange" method="POST" action="http://127.0.0.1:8009/exchange">
+                    <div class="form-group">
+                        <label>From</label>
+                        <input type="text" class="form-control" id="from" maxlength="3"/>
+                    </div>
+                    <div class="form-group">
+                        <label>To</label>
+                        <input type="text" class="form-control" id="to" maxlength="3"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="text" class="form-control" id="date" data-toggle="datepicker"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Rate</label>
+                        <input type="text" class="form-control" id="rate" />
+                    </div>
+                    <label id="msg"></label>
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </form>
+            </div>
+            <div class=" col-sm-offset-1 col-sm-6">
+                <h3>Track Exchange List</h3>
+                <form id="view_exchange" method="GET">                        
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="text" class="form-control" id="date_track" data-toggle="datepicker"/>
+                    </div>           
+                    <div>
+                        <table class="table">
+                            <thead>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Rate</th>
+                                <th>7 Days Avg</th>
+                                <th>Variance</th>
+                                <th>Action</th>
+                            </thead>
+                            <tbody id="user_view">
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                </form>
+            </div>            
+            <div class="col-sm-offset-1 col-sm-2">
+                <h3>Track List</h3>
+                <form id="add_track">
+                    <div class="form-group">
+                        <label>From</label>
+                        <input type="text" class="form-control" id="from_track"/>
+                    </div>  
+                    <div class="form-group">
+                        <label>To</label>
+                        <input type="text" class="form-control" id="to_track"/>
+                    </div>  
+                    <button type="submit" class="btn btn-primary">Add!</button>
+                </form>
+            </div>
+        </div>
+        <script>
+            console.info('run');
+            var exchangeList = [];
+            var hostURL = 'http://localhost:8009';
+            $('[data-toggle="datepicker"]').datepicker({
+                format: 'yyyy-mm-dd'
+            });
+            getExchangeList(true)          
+            $('#add_exchange').on('submit', function(e){
+                $('#msg').html('')
+                e.preventDefault();
+                var rate = $('#rate').val();
+                var date = $('#date').val();
+                var to = $('#to').val();
+                var from = $('#from').val();
+
+                var rateValid = (rate.match(/^-?\d*(\.\d+)?$/));
+
+                if(!rateValid){           
+                    alert("Wrong Rate")         
+                    return;
+                }
+                var req = {
+                    rate: parseFloat(rate),
+                    date: date,
+                    to: to,
+                    from: from
+                }
+                $.ajax({
+                    url: hostURL+'/exchange',                    
+                    type:'POST',
+                    contentType: 'application/json',
+                    dataType:'JSON',
+                    data: JSON.stringify(req),
+                    success : function(res){
+                        var success = "<span style='color:green;'>Insert Success!</span>"
+                        $('#msg').html(success)                        
+                        console.log(res);
+                    },
+                    error: function(err){
+                        var fail = "<span style='color:red;'>"+err.responseJSON.error.title+"</span>"
+                        $('#msg').html(fail)
+                        console.info(err)
+                    }
+                })
+            })
+
+            $('#view_exchange').on('submit', function(e) {
+                e.preventDefault()
+                getExchangeList(true)
+            })
+
+            $('#add_track').on('submit', function(e){
+                e.preventDefault();
+                var to = $('#to_track').val();
+                var from = $('#from_track').val();
+                var req = {                    
+                    to: to,
+                    from: from
+                }
+                $.ajax({
+                    url: hostURL+'/exchange_list',                    
+                    type:'POST',
+                    contentType: 'application/json',
+                    dataType:'JSON',
+                    data: JSON.stringify(req),
+                    success : function(res){
+                        alert('insert success')
+                        getExchangeList(true)
+                    },
+                    error: function(err){
+                        var fail = "<span style='color:red;'>"+err.responseJSON.error.title+"</span>"
+                        $('#msg').html(fail)
+                        console.info(err)
+                    }
+                })
+
+            })
+
+            function getExchangeList(useDate){                
+                exchangeList = [];
+                $.ajax({
+                    url: hostURL+'/exchange_list',
+                    type:'GET',
+                    dataType:'JSON',
+                    success : function(res){
+                        exchangeList = res.data    
+                        var html = '';
+                       
+                            getExchangeListData(exchangeList, useDate)
+                        
+                    },
+                    error: function(err){
+                        alert('FAIL TO GET EXCHANGELIST')
+                    }
+                })
+            }
+
+            function getExchangeListData(exchangeList, useDate) {
+                var html = '';
+                var date = $('#date_track').val()                
+                for(var i=0;i<exchangeList.length;i++) {
+                    var from = exchangeList[i].from;
+                    var to = exchangeList[i].to;
+                    var id = exchangeList[i].id;
+                    var qs = '?from='+from+'&to='+to;
+                    if (useDate) {
+                        qs+='&date='+date;
+                    }
+                    $.ajax({
+                        url: hostURL+'/exchange'+qs,
+                        type:'GET',
+                        dataType:'JSON',
+                        success : function(res){
+                            var varianceHtml = res.data.variance == 0 ? "Insuffucient Data" : res.data.variance;
+                            var averageHtml = res.data.week_rate == 0 ? "Insuffucient Data" : res.data.week_rate;
+                            var rateHtml = res.data.rate == 0 ? "Insuffucient Data" : res.data.rate;
+                            html+= '<tr><td>'+from+'</td><td>'+to+'</td>'+'<td>'+rateHtml+'</td><td>'+averageHtml+'</td><td>'+varianceHtml+'</td><td>'+
+                                    '   <button class="btn btn-warning" id="data'+id+'" onclick="delList('+id+')">Delete</button></td></tr>';                            
+                        },
+                        error: function(err){
+                            if(err.responseJSON.error.status == 500) {                                
+                                html+= '<tr><td>'+from+'</td><td>'+to+'</td>'+'<td>Insuffucient data</td><td>Insuffucient data</td><td>Insuffucient data</td><td>'+
+                                    '   <button class="btn btn-warning" id="data'+id+'" onclick="delList('+id+')">Delete</button></td></tr>';
+                            }else {
+                                alert('FAIL TO GET EXCHANGELISTDATA')
+                            }                            
+                        }
+                    })
+                }
+                $(document).ajaxStop(function () {
+                    $('#user_view').html(html);
+                    // 0 === $.active
+                });
+                
+            }
+
+            function delList(id) {
+                $.ajax({
+                    url: hostURL+'/exchange_list/'+id,                    
+                    type:'DELETE',                    
+                    dataType:'JSON',                    
+                    success : function(res){                        
+                        getExchangeList(true)
+                        
+                        console.log(res);
+                    },
+                    error: function(err){
+                        alert('fail delete')
+                        console.info(err)
+                    }
+                })
+            }
+        </script>
+   </body>
+</html>
