@@ -7,7 +7,7 @@ This project is build for self learning process, it uses SOLID principles to str
 Run `docker-compose up` and it will do the rest
 > If something happens, try to run docker-compose build and docker-compose up again
 
-go to browser and enter `localhost:3000/currency`
+go to browser and enter `localhost:3000/currency` 
 > For html part it is just use to connect and test with the backend, therefore the code is messy.
 
 # Project Structure
@@ -41,6 +41,9 @@ Only put 2 example of mock test that is done using gomock, it is easy to test th
 
 
 # API DOC
+
+URL: `http://localhost:8009`
+
 **GET** /exchange?from=USD&to=IDR&date=2018-09-03  
 To get the currency rate if date is not pass default is today
 
